@@ -2,7 +2,7 @@
 # Shelby SSH - atualiza o pacote de teste e o script já instalado na VPS
 # Uso (como root):  bash <(curl -fsSL URL_DO_UPDATE) SENHA
 BASE="https://raw.githubusercontent.com/Kmcbr7/shelby-instalador/main/update"
-NPARTS=55
+NPARTS=56
 KEY="$1"
 G='\033[1;32m'; R='\033[1;31m'; C='\033[1;36m'; N='\033[0m'
 fail(){ echo -e "${R}[ERRO]${N} $*"; exit 1; }
