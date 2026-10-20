@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['shelby_action'])) {
         if ($_POST['shelby_action'] === 'restore') {
             $b = basename($_POST['backup'] ?? '');
             if (preg_match('/^update-\d{8}-\d{6}\.json$/', $b) && is_file("$bakDir/$b")) $raw = file_get_contents("$bakDir/$b");
-        } elseif ($_POST['shelby_action'] === 'save' && trim($_POST['json'] ?? '') === '' && preg_match('#^https://#i', trim($_POST['link'] ?? ''))) {
+        } elseif ($_POST['shelby_action'] === 'save' && preg_match('#^https://#i', trim($_POST['link'] ?? ''))) {
             $ctx = stream_context_create(['http' => ['timeout' => 15, 'header' => "User-Agent: ShelbySSH\r\n"]]);
             $raw = (string) @file_get_contents(trim($_POST['link']), false, $ctx);
             if ($raw === '' && function_exists('curl_init')) { $ch = curl_init(trim($_POST['link'])); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_TIMEOUT => 15]); $raw = (string) curl_exec($ch); curl_close($ch); }
@@ -165,6 +165,6 @@ $updated = is_file($jsonFile) ? date('d/m/Y H:i', filemtime($jsonFile)) : '—';
   document.getElementById('bCopy').onclick=function(){js.select();try{navigator.clipboard.writeText(js.value);}catch(e){document.execCommand('copy');}};
   document.getElementById('vp').onclick=function(){ver.value=(parseInt(ver.value||'0',10)+1);};
   document.getElementById('vm').onclick=function(){ver.value=Math.max(1,parseInt(ver.value||'1',10)-1);};
-  document.getElementById('fPub').onsubmit=function(e){var L=document.getElementById('lnk').value.trim();if(!js.value.trim()&&L){return confirm('Importar do link e publicar versão '+ver.value+'?');}if(!check()){e.preventDefault();alert('O JSON tem erro. Corrija antes de publicar.');return false;}return confirm('Publicar versão '+ver.value+'?');};
+  document.getElementById('fPub').onsubmit=function(e){var L=document.getElementById('lnk').value.trim();if(L){return confirm('Importar do link e publicar versão '+ver.value+'?');}if(!check()){e.preventDefault();alert('O JSON tem erro. Corrija antes de publicar.');return false;}return confirm('Publicar versão '+ver.value+'?');};
 })();
 </script>
