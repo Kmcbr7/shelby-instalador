@@ -1,5 +1,5 @@
 <?php
-// Shelby SSH - Painel Shelby: edita o update.json lido pelo app SHELBY NET
+// Shelby SSH - Atualizar App: cola o update.json completo, ajusta a versão e publica
 if (basename($_SERVER["SCRIPT_FILENAME"] ?? '') === basename(__FILE__)) { header('Location: ../../index.php?e=404'); exit; }
 if (session_status() !== PHP_SESSION_ACTIVE) { @session_start(); }
 
@@ -11,47 +11,45 @@ $publicUrl = 'https://' . preg_replace('/:\d+$/', '', $host) . '/update.json';
 
 if (empty($_SESSION['shelby_csrf'])) { $_SESSION['shelby_csrf'] = bin2hex(random_bytes(16)); }
 $csrf = $_SESSION['shelby_csrf'];
-$msg = ''; $msgType = 'success';
+$msg = ''; $msgType = 'ok'; $keepRaw = null;
 
 function shelby_bak($file, $dir) {
     if (!is_file($file)) return;
     @mkdir($dir, 0750, true);
     @copy($file, $dir . '/update-' . date('Ymd-His') . '.json');
-    $all = glob($dir . '/update-*.json') ?: [];
-    rsort($all);
-    foreach (array_slice($all, 15) as $old) @unlink($old);
+    $all = glob($dir . '/update-*.json') ?: []; rsort($all);
+    foreach (array_slice($all, 20) as $old) @unlink($old);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['shelby_action'])) {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
-        $msg = 'Sessão expirada. Recarregue a página.'; $msgType = 'danger';
+        $msg = 'Sessão expirada. Recarregue a página.'; $msgType = 'err';
     } else {
         $raw = '';
-        if ($_POST['shelby_action'] === 'upload' && !empty($_FILES['arquivo']['tmp_name'])) {
-            $raw = (string) file_get_contents($_FILES['arquivo']['tmp_name']);
-        } elseif ($_POST['shelby_action'] === 'restore') {
+        if ($_POST['shelby_action'] === 'restore') {
             $b = basename($_POST['backup'] ?? '');
             if (preg_match('/^update-\d{8}-\d{6}\.json$/', $b) && is_file("$bakDir/$b")) $raw = file_get_contents("$bakDir/$b");
         } else {
             $raw = (string) ($_POST['json'] ?? '');
         }
+        $raw = preg_replace('/^\xEF\xBB\xBF/', '', trim($raw));
         $data = json_decode($raw, true);
         if (!is_array($data)) {
-            $msg = 'JSON inválido: ' . json_last_error_msg() . '. Nada foi salvo.'; $msgType = 'danger';
+            $msg = 'JSON inválido: ' . json_last_error_msg() . '. Nada foi publicado — confira vírgulas e aspas.'; $msgType = 'err'; $keepRaw = $raw;
         } elseif (!isset($data['Networks']) || !is_array($data['Networks'])) {
-            $msg = 'O arquivo precisa ter a lista "Networks". Nada foi salvo.'; $msgType = 'danger';
+            $msg = 'Falta a lista "Networks". Nada foi publicado.'; $msgType = 'err'; $keepRaw = $raw;
         } else {
-            if (!empty($_POST['bump']) && $_POST['shelby_action'] === 'save') {
-                $data['Version'] = (string) ((int) ($data['Version'] ?? 0) + 1);
+            if ($_POST['shelby_action'] === 'save' && trim($_POST['versao'] ?? '') !== '') {
+                $data['Version'] = preg_replace('/[^0-9.]/', '', $_POST['versao']);
             }
             shelby_bak($jsonFile, $bakDir);
             $out = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $tmp = $jsonFile . '.tmp';
             if (@file_put_contents($tmp, $out) !== false && @rename($tmp, $jsonFile)) {
                 @chmod($jsonFile, 0644);
-                $msg = 'Salvo! Versão ' . htmlspecialchars($data['Version'] ?? '?') . ' com ' . count($data['Networks']) . ' redes. O app baixa na próxima abertura.';
+                $msg = 'Publicado! Versão ' . htmlspecialchars($data['Version'] ?? '?') . ' com ' . count($data['Networks']) . ' conexões. Os clientes recebem o aviso de atualização ao abrir o app.';
             } else {
-                $msg = 'Sem permissão para gravar ' . htmlspecialchars($jsonFile) . '. Rode o comando de correção na VPS.'; $msgType = 'danger';
+                $msg = 'Sem permissão para gravar o update.json na VPS.'; $msgType = 'err'; $keepRaw = $raw;
             }
         }
     }
@@ -59,140 +57,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['shelby_action'])) {
 
 $current = is_file($jsonFile) ? file_get_contents($jsonFile) : '';
 $cur = json_decode($current, true);
-if (!is_array($cur)) {
-    $cur = ['Version' => '1', 'ReleaseNotes' => '', 'UrlUpdate' => $publicUrl, 'EmailFeedback' => '', 'UrlContato' => '', 'UrlTermos' => '', 'CheckUser' => 'true', 'Udp' => [], 'Servers' => [], 'Networks' => []];
-}
+$pretty = is_array($cur) ? json_encode($cur, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+$curVer = is_array($cur) ? (string) ($cur['Version'] ?? '1') : '0';
+$curNets = is_array($cur) && isset($cur['Networks']) ? count($cur['Networks']) : 0;
+$curSrv = is_array($cur) && isset($cur['Servers']) ? count($cur['Servers']) : 0;
+$nextVer = ctype_digit($curVer) ? (string) ((int) $curVer + 1) : $curVer;
 $backups = glob($bakDir . '/update-*.json') ?: []; rsort($backups);
-$jsonAttr = htmlspecialchars(json_encode($cur, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES);
+$updated = is_file($jsonFile) ? date('d/m/Y H:i', filemtime($jsonFile)) : '—';
 ?>
 <style>
-.shelby-net .card{background:#0f1a33;border:1px solid rgba(0,229,255,.25);box-shadow:0 0 18px rgba(0,229,255,.08)}
-.shelby-net .card-title{color:#ffd166}
-.shelby-net .table td{vertical-align:top}
-.shelby-net textarea.pl{min-width:260px;font-family:monospace;font-size:12px}
-.shelby-net .net-row input,.shelby-net .net-row textarea{font-size:12px}
-.shelby-net code{color:#00e5ff}
+#shelbyUp{--c:#00e5ff;--v:#8b5cf6;--g:#ffc94d;--mut:#8ea0c4}
+#shelbyUp .box{background:linear-gradient(180deg,rgba(13,24,52,.95),rgba(7,13,30,.97));border:1px solid rgba(0,229,255,.2);border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#shelbyUp h3{font-family:Orbitron,Inter,sans-serif;font-size:19px;margin:0 0 4px;background:linear-gradient(90deg,var(--g),#fff3c4,var(--c));-webkit-background-clip:text;color:transparent}
+#shelbyUp .mut{color:var(--mut);font-size:13px}
+#shelbyUp .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+#shelbyUp .stats div{background:rgba(6,11,26,.6);border:1px solid rgba(0,229,255,.15);border-radius:14px;padding:10px;text-align:center}
+#shelbyUp .stats b{display:block;font-family:Orbitron,sans-serif;color:var(--c);font-size:18px}
+#shelbyUp .stats span{font-size:11px;color:var(--mut)}
+#shelbyUp .step{display:flex;align-items:center;gap:10px;font-weight:700;color:#e6edfb;margin-bottom:10px}
+#shelbyUp .step i{font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--c),var(--v));color:#fff;font-size:13px}
+#shelbyUp textarea{width:100%;min-height:360px;background:#050a18!important;color:#d8f6ff!important;border:1px solid rgba(0,229,255,.25)!important;border-radius:14px!important;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:14px;resize:vertical}
+#shelbyUp .row2{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#shelbyUp .ver{display:flex;align-items:center;gap:8px;background:rgba(6,11,26,.6);border:1px solid rgba(255,201,77,.35);border-radius:14px;padding:6px 8px}
+#shelbyUp .ver input{width:90px;text-align:center;font-family:Orbitron,sans-serif;font-size:20px;background:transparent!important;border:0!important;color:var(--g)!important;box-shadow:none!important}
+#shelbyUp .ver button{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,201,77,.4);background:rgba(255,201,77,.1);color:var(--g);font-size:18px;line-height:1}
+#shelbyUp .bt{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer}
+#shelbyUp .bt-pub{background:linear-gradient(90deg,var(--g),#ffe08a,#ff9f1c);color:#1a1100;box-shadow:0 8px 22px rgba(255,170,40,.25);flex:1;min-width:180px;font-size:15px}
+#shelbyUp .bt-sec{background:rgba(0,229,255,.1);color:var(--c);border:1px solid rgba(0,229,255,.3)}
+#shelbyUp .msg{border-radius:14px;padding:12px 14px;margin-top:12px;font-weight:600}
+#shelbyUp .msg.ok{background:rgba(34,229,139,.12);border:1px solid rgba(34,229,139,.4);color:#7ef5bf}
+#shelbyUp .msg.err{background:rgba(255,93,122,.12);border:1px solid rgba(255,93,122,.4);color:#ff9fb1}
+#shelbyUp #live{font-size:13px;margin-top:8px}
+#shelbyUp select{background:#050a18!important;color:#e6edfb!important;border:1px solid rgba(0,229,255,.25)!important;border-radius:12px!important;padding:9px;max-width:100%}
+@media(max-width:600px){#shelbyUp .stats{grid-template-columns:repeat(2,1fr)}}
 </style>
-<div class="shelby-net" id="shelbyNet" data-json="<?= $jsonAttr ?>">
-  <div class="card"><div class="card-body">
-    <h4 class="card-title">⚡ Painel Shelby — Payloads do app SHELBY NET</h4>
-    <p class="mb-50">Link que o app lê: <code><?= htmlspecialchars($publicUrl) ?></code>
-      <a class="btn btn-sm btn-outline-info ms-50" target="_blank" href="/update.json?v=<?= time() ?>">Abrir</a></p>
-    <small>Toda vez que salvar com “subir versão” marcado, o app avisa o cliente que tem atualização.</small>
-    <?php if ($msg): ?><div class="alert alert-<?= $msgType ?> mt-1 p-1"><?= $msg ?></div><?php endif; ?>
-  </div></div>
 
-  <form method="post" id="formSave">
+<div id="shelbyUp">
+  <div class="box">
+    <h3>⚡ Atualizar App SHELBY NET</h3>
+    <div class="mut">Cole o update.json completo, ajuste a versão e publique. O app lê: <a href="/update.json?v=<?= time() ?>" target="_blank"><?= htmlspecialchars($publicUrl) ?></a></div>
+    <div class="stats">
+      <div><b><?= htmlspecialchars($curVer) ?></b><span>Versão no ar</span></div>
+      <div><b><?= $curNets ?></b><span>Conexões</span></div>
+      <div><b><?= $curSrv ?></b><span>Servidores</span></div>
+      <div><b style="font-size:13px;line-height:22px"><?= $updated ?></b><span>Última publicação</span></div>
+    </div>
+    <?php if ($msg): ?><div class="msg <?= $msgType ?>"><?= $msg ?></div><?php endif; ?>
+  </div>
+
+  <form method="post" class="box" id="fPub">
     <input type="hidden" name="csrf" value="<?= $csrf ?>">
     <input type="hidden" name="shelby_action" value="save">
-    <input type="hidden" name="json" id="jsonOut">
-
-    <div class="card"><div class="card-body">
-      <h5 class="card-title">Geral</h5>
-      <div class="row">
-        <div class="col-md-2 mb-1"><label>Versão</label><input class="form-control" data-k="Version"></div>
-        <div class="col-md-4 mb-1"><label>WhatsApp / contato</label><input class="form-control" data-k="UrlContato"></div>
-        <div class="col-md-3 mb-1"><label>Termos (URL)</label><input class="form-control" data-k="UrlTermos"></div>
-        <div class="col-md-3 mb-1"><label>E-mail feedback</label><input class="form-control" data-k="EmailFeedback"></div>
-        <div class="col-md-6 mb-1"><label>URL de atualização</label><input class="form-control" data-k="UrlUpdate"></div>
-        <div class="col-md-2 mb-1"><label>CheckUser</label><select class="form-select" data-k="CheckUser"><option>true</option><option>false</option></select></div>
-        <div class="col-md-4 mb-1"><label>Portas UDP (separe por vírgula)</label><input class="form-control" id="udp"></div>
-        <div class="col-12"><label>Notas da atualização (aparece no app)</label><textarea class="form-control" rows="5" data-k="ReleaseNotes"></textarea></div>
-      </div>
-    </div></div>
-
-    <div class="card"><div class="card-body">
-      <h5 class="card-title">Servidores <button type="button" class="btn btn-sm btn-outline-warning ms-1" id="addSrv">+ servidor</button></h5>
-      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nome</th><th>IP / domínio</th><th>Porta SSH</th><th>Porta SSL</th><th>CheckUser</th><th>Bandeira</th><th></th></tr></thead><tbody id="srvBody"></tbody></table></div>
-    </div></div>
-
-    <div class="card"><div class="card-body">
-      <h5 class="card-title">Redes / payloads (<span id="netCount">0</span>)
-        <button type="button" class="btn btn-sm btn-outline-warning ms-1" id="addNet">+ rede</button></h5>
-      <input class="form-control mb-1" id="netFilter" placeholder="Filtrar por nome (ex.: TIM, VIVO, CLARO)">
-      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>Nome</th><th>Payload</th><th>SNI / TLS IP</th><th>Proxy : porta</th><th>Info / ícone</th><th></th></tr></thead><tbody id="netBody"></tbody></table></div>
-    </div></div>
-
-    <div class="card"><div class="card-body d-flex flex-wrap align-items-center gap-1">
-      <div class="form-check me-2"><input class="form-check-input" type="checkbox" name="bump" value="1" id="bump" checked><label class="form-check-label" for="bump">Subir versão (+1) ao salvar</label></div>
-      <button class="btn btn-warning" type="submit">💾 Salvar e publicar</button>
-      <button class="btn btn-outline-info" type="button" id="dl">⬇️ Baixar JSON</button>
-      <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rawBox">{ } Editar JSON bruto</button>
+    <div class="step"><i>1</i> Cole a payload completa</div>
+    <textarea name="json" id="js" spellcheck="false" placeholder='{ "Version": "1", ... "Networks": [ ... ] }'><?= htmlspecialchars($keepRaw ?? $pretty) ?></textarea>
+    <div id="live" class="mut"></div>
+    <div class="row2" style="margin-top:10px">
+      <button type="button" class="bt bt-sec" id="bClear">Limpar</button>
+      <button type="button" class="bt bt-sec" id="bPaste">Colar</button>
+      <button type="button" class="bt bt-sec" id="bFmt">Organizar</button>
+      <button type="button" class="bt bt-sec" id="bCopy">Copiar</button>
     </div>
-    <div class="collapse" id="rawBox"><div class="card"><div class="card-body">
-      <textarea class="form-control" id="raw" rows="18" style="font-family:monospace;font-size:12px"></textarea>
-      <button class="btn btn-sm btn-outline-warning mt-1" type="button" id="applyRaw">Aplicar JSON bruto nos campos</button>
-    </div></div></div>
+    <div class="step" style="margin-top:18px"><i>2</i> Versão</div>
+    <div class="row2">
+      <div class="ver"><button type="button" id="vm">−</button><input name="versao" id="ver" value="<?= htmlspecialchars($nextVer) ?>" inputmode="numeric"><button type="button" id="vp">+</button></div>
+      <span class="mut">Versão maior que a do ar = clientes recebem o aviso.</span>
+    </div>
+    <div class="step" style="margin-top:18px"><i>3</i> Publicar</div>
+    <button type="submit" class="bt bt-pub">🚀 Publicar atualização</button>
   </form>
 
-  <div class="card"><div class="card-body">
-    <h5 class="card-title">Importar / restaurar</h5>
-    <form method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-1 mb-1">
-      <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="shelby_action" value="upload">
-      <input class="form-control" style="max-width:320px" type="file" name="arquivo" accept=".json,application/json" required>
-      <button class="btn btn-outline-warning" type="submit">Enviar update.json</button>
-    </form>
-    <?php if ($backups): ?>
-    <form method="post" class="d-flex flex-wrap gap-1">
-      <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="shelby_action" value="restore">
-      <select class="form-select" style="max-width:320px" name="backup">
-        <?php foreach ($backups as $b): $n = basename($b); ?><option value="<?= htmlspecialchars($n) ?>"><?= htmlspecialchars($n) ?></option><?php endforeach; ?>
-      </select>
-      <button class="btn btn-outline-secondary" type="submit" onclick="return confirm('Restaurar este backup?')">Restaurar backup</button>
-    </form>
-    <?php endif; ?>
-  </div></div>
+  <?php if ($backups): ?>
+  <form method="post" class="box" onsubmit="return confirm('Voltar para este backup?')">
+    <input type="hidden" name="csrf" value="<?= $csrf ?>"><input type="hidden" name="shelby_action" value="restore">
+    <div class="step"><i>↺</i> Voltar uma versão anterior</div>
+    <div class="row2">
+      <select name="backup"><?php foreach ($backups as $b): $n = basename($b); $t = preg_replace('/update-(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)\d\d\.json/', '$3/$2/$1 $4:$5', $n); $bj = json_decode(@file_get_contents($b), true); ?>
+        <option value="<?= htmlspecialchars($n) ?>"><?= $t ?> — v<?= htmlspecialchars($bj['Version'] ?? '?') ?> (<?= isset($bj['Networks']) ? count($bj['Networks']) : 0 ?> conexões)</option>
+      <?php endforeach; ?></select>
+      <button class="bt bt-sec" type="submit">Restaurar</button>
+    </div>
+  </form>
+  <?php endif; ?>
 </div>
-
 <script>
 (function(){
-  var box=document.getElementById('shelbyNet'); var D=JSON.parse(box.dataset.json||'{}');
-  D.Servers=D.Servers||[]; D.Networks=D.Networks||[]; D.Udp=D.Udp||[];
-  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-  function inp(arr,i,k,cls){return '<input class="form-control form-control-sm '+(cls||'')+'" data-a="'+arr+'" data-i="'+i+'" data-f="'+k+'" value="'+esc(D[arr][i][k])+'">';}
-  function renderGeneral(){
-    box.querySelectorAll('[data-k]').forEach(function(el){el.value=D[el.dataset.k]==null?'':D[el.dataset.k];});
-    document.getElementById('udp').value=(D.Udp||[]).map(function(u){return u.Porta;}).join(', ');
+  var js=document.getElementById('js'),live=document.getElementById('live'),ver=document.getElementById('ver');
+  function check(){
+    var t=js.value.trim(); if(!t){live.innerHTML='Cole o JSON aqui.';return null;}
+    try{var d=JSON.parse(t);var n=(d.Networks||[]).length,s=(d.Servers||[]).length;
+      live.innerHTML='<span style="color:#7ef5bf">✔ JSON válido</span> · '+n+' conexões · '+s+' servidor(es) · versão no texto: '+(d.Version||'?');return d;}
+    catch(e){live.innerHTML='<span style="color:#ff9fb1">✖ JSON com erro: '+e.message+'</span>';return null;}
   }
-  function renderSrv(){
-    document.getElementById('srvBody').innerHTML=D.Servers.map(function(s,i){
-      return '<tr><td>'+inp('Servers',i,'Name')+'</td><td>'+inp('Servers',i,'ServerIP')+'</td><td>'+inp('Servers',i,'ServerPort')+'</td><td>'+inp('Servers',i,'SSLPort')+'</td><td>'+inp('Servers',i,'CheckUser')+'</td><td>'+inp('Servers',i,'FLAG')+'</td><td><button type="button" class="btn btn-sm btn-outline-danger" data-del="Servers" data-i="'+i+'">✕</button></td></tr>';
-    }).join('');
-  }
-  function renderNet(){
-    var f=(document.getElementById('netFilter').value||'').toLowerCase();
-    document.getElementById('netCount').textContent=D.Networks.length;
-    document.getElementById('netBody').innerHTML=D.Networks.map(function(n,i){
-      if(f && String(n.Name||'').toLowerCase().indexOf(f)<0) return '';
-      return '<tr class="net-row"><td>'+(i+1)+'<br><button type="button" class="btn btn-sm p-0" data-mv="-1" data-i="'+i+'">▲</button><button type="button" class="btn btn-sm p-0" data-mv="1" data-i="'+i+'">▼</button></td>'+
-        '<td>'+inp('Networks',i,'Name')+'</td>'+
-        '<td><textarea class="form-control pl" rows="3" data-a="Networks" data-i="'+i+'" data-f="Payload">'+esc(n.Payload)+'</textarea></td>'+
-        '<td>'+inp('Networks',i,'SNI')+inp('Networks',i,'TlsIP','mt-25')+'</td>'+
-        '<td>'+inp('Networks',i,'ProxyIP')+inp('Networks',i,'ProxyPort','mt-25')+'</td>'+
-        '<td>'+inp('Networks',i,'Info')+inp('Networks',i,'FLAG','mt-25')+'</td>'+
-        '<td><button type="button" class="btn btn-sm btn-outline-info mb-25" data-dup="'+i+'">⧉</button><br><button type="button" class="btn btn-sm btn-outline-danger" data-del="Networks" data-i="'+i+'">✕</button></td></tr>';
-    }).join('');
-  }
-  function renderAll(){renderGeneral();renderSrv();renderNet();}
-  function collect(){
-    box.querySelectorAll('[data-k]').forEach(function(el){D[el.dataset.k]=el.value;});
-    D.Udp=document.getElementById('udp').value.split(',').map(function(p){return p.trim();}).filter(Boolean).map(function(p){return {Porta:p};});
-    return D;
-  }
-  box.addEventListener('input',function(e){var t=e.target; if(t.dataset.a){D[t.dataset.a][+t.dataset.i][t.dataset.f]=t.value;}});
-  box.addEventListener('click',function(e){
-    var t=e.target.closest('button'); if(!t) return;
-    if(t.dataset.del){ if(confirm('Remover?')){D[t.dataset.del].splice(+t.dataset.i,1); renderSrv(); renderNet();} }
-    else if(t.dataset.dup){var i=+t.dataset.dup; var c=JSON.parse(JSON.stringify(D.Networks[i])); c.Name=(c.Name||'')+' (cópia)'; D.Networks.splice(i+1,0,c); renderNet();}
-    else if(t.dataset.mv){var i=+t.dataset.i, j=i+(+t.dataset.mv); if(j>=0&&j<D.Networks.length){var x=D.Networks[i];D.Networks[i]=D.Networks[j];D.Networks[j]=x;renderNet();}}
-  });
-  document.getElementById('netFilter').addEventListener('input',renderNet);
-  document.getElementById('addNet').onclick=function(){D.Networks.push({Name:'NOVA REDE',FLAG:'ic_vivo.png',Payload:'',SNI:'',TlsIP:'',ProxyIP:'',ProxyPort:'80',Info:'Proxy'});document.getElementById('netFilter').value='';renderNet();};
-  document.getElementById('addSrv').onclick=function(){D.Servers.push({Name:'SERVIDOR - '+String(D.Servers.length+1).padStart(2,'0'),TYPE:'premium',FLAG:'br.png',ServerIP:'',CheckUser:'',ServerPort:'22',SSLPort:'443',USER:'',PASS:''});renderSrv();};
-  document.querySelector('[data-bs-target="#rawBox"]').addEventListener('click',function(){document.getElementById('raw').value=JSON.stringify(collect(),null,2);});
-  document.getElementById('applyRaw').onclick=function(){try{D=JSON.parse(document.getElementById('raw').value);D.Servers=D.Servers||[];D.Networks=D.Networks||[];renderAll();alert('Aplicado. Agora clique em Salvar.');}catch(err){alert('JSON inválido: '+err.message);}};
-  document.getElementById('dl').onclick=function(){var b=new Blob([JSON.stringify(collect(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='update.json';a.click();};
-  document.getElementById('formSave').addEventListener('submit',function(){document.getElementById('jsonOut').value=JSON.stringify(collect());});
-  renderAll();
+  js.addEventListener('input',check); check();
+  document.getElementById('bClear').onclick=function(){js.value='';check();js.focus();};
+  document.getElementById('bPaste').onclick=function(){if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){js.value=t;check();});}else{js.focus();}};
+  document.getElementById('bFmt').onclick=function(){var d=check();if(d)js.value=JSON.stringify(d,null,2);};
+  document.getElementById('bCopy').onclick=function(){js.select();try{navigator.clipboard.writeText(js.value);}catch(e){document.execCommand('copy');}};
+  document.getElementById('vp').onclick=function(){ver.value=(parseInt(ver.value||'0',10)+1);};
+  document.getElementById('vm').onclick=function(){ver.value=Math.max(1,parseInt(ver.value||'1',10)-1);};
+  document.getElementById('fPub').onsubmit=function(e){if(!check()){e.preventDefault();alert('O JSON tem erro. Corrija antes de publicar.');return false;}return confirm('Publicar versão '+ver.value+'?');};
 })();
 </script>
