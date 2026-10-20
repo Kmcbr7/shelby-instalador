@@ -29,6 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['shelby_action'])) {
         if ($_POST['shelby_action'] === 'restore') {
             $b = basename($_POST['backup'] ?? '');
             if (preg_match('/^update-\d{8}-\d{6}\.json$/', $b) && is_file("$bakDir/$b")) $raw = file_get_contents("$bakDir/$b");
+        } elseif ($_POST['shelby_action'] === 'save' && trim($_POST['json'] ?? '') === '' && preg_match('#^https://#i', trim($_POST['link'] ?? ''))) {
+            $ctx = stream_context_create(['http' => ['timeout' => 15, 'header' => "User-Agent: ShelbySSH\r\n"]]);
+            $raw = (string) @file_get_contents(trim($_POST['link']), false, $ctx);
+            if ($raw === '' && function_exists('curl_init')) { $ch = curl_init(trim($_POST['link'])); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_TIMEOUT => 15]); $raw = (string) curl_exec($ch); curl_close($ch); }
         } else {
             $raw = (string) ($_POST['json'] ?? '');
         }
@@ -112,6 +116,11 @@ $updated = is_file($jsonFile) ? date('d/m/Y H:i', filemtime($jsonFile)) : '—';
     <textarea name="json" id="js" spellcheck="false" placeholder='{ "Version": "1", ... "Networks": [ ... ] }'><?= htmlspecialchars($keepRaw ?? $pretty) ?></textarea>
     <div id="live" class="mut"></div>
     <div class="row2" style="margin-top:10px">
+      <label class="bt bt-sec" style="margin:0">📁 Escolher arquivo .json<input type="file" id="fArq" accept=".json,application/json,text/plain" style="display:none"></label>
+      <input type="url" name="link" id="lnk" placeholder="ou cole um link https://...json" style="flex:1;min-width:200px;background:#050a18;color:#e6edfb;border:1px solid rgba(0,229,255,.25);border-radius:12px;padding:10px">
+    </div>
+    <div class="mut" style="font-size:12px;margin-top:6px">Dica: se copiar o texto pelo celular sumir as aspas, use o arquivo ou o link.</div>
+    <div class="row2" style="margin-top:10px">
       <button type="button" class="bt bt-sec" id="bClear">Limpar</button>
       <button type="button" class="bt bt-sec" id="bPaste">Colar</button>
       <button type="button" class="bt bt-sec" id="bFmt">Organizar</button>
@@ -149,12 +158,13 @@ $updated = is_file($jsonFile) ? date('d/m/Y H:i', filemtime($jsonFile)) : '—';
     catch(e){live.innerHTML='<span style="color:#ff9fb1">✖ JSON com erro: '+e.message+'</span>';return null;}
   }
   js.addEventListener('input',check); check();
+  document.getElementById('fArq').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){js.value=String(r.result).replace(/^\uFEFF/,'');check();try{var d=JSON.parse(js.value);if(d.Version)ver.value=d.Version;}catch(e){}};r.readAsText(f,'utf-8');};
   document.getElementById('bClear').onclick=function(){js.value='';check();js.focus();};
   document.getElementById('bPaste').onclick=function(){if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){js.value=t;check();});}else{js.focus();}};
   document.getElementById('bFmt').onclick=function(){var d=check();if(d)js.value=JSON.stringify(d,null,2);};
   document.getElementById('bCopy').onclick=function(){js.select();try{navigator.clipboard.writeText(js.value);}catch(e){document.execCommand('copy');}};
   document.getElementById('vp').onclick=function(){ver.value=(parseInt(ver.value||'0',10)+1);};
   document.getElementById('vm').onclick=function(){ver.value=Math.max(1,parseInt(ver.value||'1',10)-1);};
-  document.getElementById('fPub').onsubmit=function(e){if(!check()){e.preventDefault();alert('O JSON tem erro. Corrija antes de publicar.');return false;}return confirm('Publicar versão '+ver.value+'?');};
+  document.getElementById('fPub').onsubmit=function(e){var L=document.getElementById('lnk').value.trim();if(!js.value.trim()&&L){return confirm('Importar do link e publicar versão '+ver.value+'?');}if(!check()){e.preventDefault();alert('O JSON tem erro. Corrija antes de publicar.');return false;}return confirm('Publicar versão '+ver.value+'?');};
 })();
 </script>
