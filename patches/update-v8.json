@@ -1,0 +1,269 @@
+{
+  "Version": "8",
+  "ReleaseNotes": "➡️ ATUALIZAÇÃO DISPONÍVEL ⬅️\n••••••••••••••••••••••••••••••\n🔰 Atualização: 19/10/2026 🔰\n\n🚀 Conexões revisadas e mais estáveis\n💜 VIVO PLANO / EASY / SECURITY\n💙 TIM R/VALIDA e R/EXPIRADA\n❤️ CLARO PLANOS (SSL)\n\n🔰 DICA: tenha 2 chips de operadoras diferentes\n🔛 Mantenha seu aplicativo sempre atualizado!\n",
+  "UrlUpdate": "https://painelvpn.drogariatefe24h.com.br/update.json",
+  "EmailFeedback": "",
+  "UrlContato": "https://wa.me/5562998001820",
+  "UrlTermos": "",
+  "CheckUser": "true",
+  "Udp": [
+    {
+      "Porta": "7300"
+    }
+  ],
+  "Servers": [
+    {
+      "Name": "SERVIDOR - 01",
+      "TYPE": "premium",
+      "FLAG": "br.png",
+      "ServerIP": "vpn.drogariatefe24h.com.br",
+      "CheckUser": "http://13.60.182.58:5454/checkUser",
+      "ServerPort": "22",
+      "SSLPort": "443",
+      "USER": "",
+      "PASS": ""
+    }
+  ],
+  "Networks": [
+    {
+      "Name": "VIVO PLANO [01]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.26.5.32",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO PLANO [02]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.16.239.166",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO PLANO [03]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.17.64.225",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [01]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.18.7.41",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [02]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.18.6.41",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [03]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "172.64.144.109",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [04]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.17.74.206",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [05]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.17.72.206",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO EASY [06]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.17.71.206",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO SECURITY [01]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "[delay_split]GET / HTTP/1.1[crlf]Host: [rotate=104.18.6.80;104.18.7.80;104.17.70.206;104.17.71.206;104.17.72.206;104.17.74.206;172.64.144.109;104.18.7.41][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "[app_host]",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO SECURITY [02]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: portal.vivo.com.br[crlf][crlf][split]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "[app_host]",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "VIVO SECURITY [03]",
+      "FLAG": "ic_vivo.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "[app_host]",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [01]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: www.c6bank.com.br[crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.16.239.166",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [02]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: c6bank.com.br[crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.18.33.113",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [03]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: mtls.sandbox.c6bank.com.br[crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "172.64.154.143",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [04]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: c6bank.com.br[crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "162.159.152.26",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [05]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: pre-onboarding-p.c6bank.app[crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.18.28.182",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/VALIDA [06]",
+      "FLAG": "ic_tim.png",
+      "Payload": "CONNECT / HTTP/1.1[crlf]Host: [rotate=www.c6bank.com.br;cdn.c6bank.com.br;app.c6bank.app;mobile.c6bank.app;saas.c6bank.app][crlf][crlf][split][crlf]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.19.241.25",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/EXPIRADA [01]",
+      "FLAG": "ic_tim.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "104.16.239.4",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/EXPIRADA [02]",
+      "FLAG": "ic_tim.png",
+      "Payload": "GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf]User-Agent: [ua][crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "[app_host]",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "TIM R/EXPIRADA [03]",
+      "FLAG": "ic_tim.png",
+      "Payload": "GET http://global-4-lvs-colossus-10.opera-mini.net/ HTTP/1.1[crlf]Host: global-4-lvs-colossus-10.opera-mini.net[crlf][crlf][split]GET / HTTP/1.1[crlf]Host: [app_host][crlf]Connection: Upgrade[crlf]Upgrade: websocket[crlf][crlf]",
+      "SNI": "",
+      "TlsIP": "",
+      "ProxyIP": "[app_host]",
+      "ProxyPort": "80",
+      "Info": "Proxy"
+    },
+    {
+      "Name": "CLARO PLANOS [01]",
+      "FLAG": "ic_claro.png",
+      "Payload": "",
+      "SNI": "m.waze.com",
+      "TlsIP": "13.60.182.58",
+      "ProxyIP": "",
+      "ProxyPort": "",
+      "Info": "Ssl"
+    },
+    {
+      "Name": "CLARO PLANOS [02]",
+      "FLAG": "ic_claro.png",
+      "Payload": "",
+      "SNI": "m.twitter.com",
+      "TlsIP": "13.60.182.58",
+      "ProxyIP": "",
+      "ProxyPort": "",
+      "Info": "Ssl"
+    },
+    {
+      "Name": "CLARO PLANOS [03]",
+      "FLAG": "ic_claro.png",
+      "Payload": "",
+      "SNI": "web-login.waze.com",
+      "TlsIP": "13.60.182.58",
+      "ProxyIP": "",
+      "ProxyPort": "",
+      "Info": "Ssl"
+    }
+  ]
+}
